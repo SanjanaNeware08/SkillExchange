@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../componant/Navbar";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { storage } from "../firebase"; // Import the Firebase storage
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage"; // Import Firebase v9+ functions
 
 const Register = () => {
   const [name, setName] = useState("");
@@ -17,47 +19,52 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Prepare form data
-    const formData = new FormData();
-    formData.append("name", name);
-    formData.append("email", email);
-    formData.append("phoneNo", phoneNo);
-    formData.append("password", password);
-    formData.append("domain", domain);
     if (profilePicture) {
-      formData.append("profilePicture", profilePicture); // Append the profile picture
-    }
+      // Create a reference to Firebase storage
+      const storageRef = ref(storage, `profilePictures/${profilePicture.name}`);
+      const uploadTask = uploadBytesResumable(storageRef, profilePicture);
 
-    try {
-      const response = await axios.post(
-        "http://localhost:3000/api/users/register",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data", // Set the correct header
-          },
+      // Start the upload process
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          // Track the upload progress (optional)
+        },
+        (error) => {
+          console.error("Error uploading profile picture: ", error);
+          toast.error("Failed to upload profile picture.");
+        },
+        async () => {
+          try {
+            // Once upload is complete, get the download URL of the image
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref); // Corrected this line
+
+            // Create the object with form data, including the profile picture URL
+            const userData = {
+              name,
+              email,
+              phoneNo,
+              password,
+              domain,
+              profilePicture: downloadURL, // Include the profile picture URL from Firebase
+            };
+            console.log(userData);
+            // Send the object to your backend
+            const response = await axios.post(
+              "http://localhost:3000/api/users/register",
+              userData // Send the plain object directly
+            );
+            console.log("Response:", response.data);
+            toast.success("Registration successful!");
+            navigate("/login");
+          } catch (error) {
+            console.error("Registration failed:", error);
+            toast.error("Failed to register.");
+          }
         }
       );
-      console.log("Data sent", response.data);
-
-      // Show success notification
-      toast.success("Registration successful!");
-
-      // Clear the form
-      setName("");
-      setEmail("");
-      setPhoneNo("");
-      setPassword("");
-      setDomain("");
-      setProfilePicture(null);
-
-      // Redirect to login page after a short delay
-      setTimeout(() => {
-        navigate("/login");
-      }, 1000);
-    } catch (error) {
-      console.error("Registration failed:", error);
-      toast.error("Failed to save data.");
+    } else {
+      toast.error("Please select a profile picture.");
     }
   };
 
@@ -68,7 +75,6 @@ const Register = () => {
         <form
           onSubmit={handleSubmit}
           className="w-full max-w-sm bg-white p-8 rounded-lg shadow-lg"
-          encType="multipart/form-data" // Add encoding type for file upload
         >
           <h2 className="text-2xl font-bold text-center mb-6 text-gray-700">
             Register

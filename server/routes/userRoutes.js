@@ -3,14 +3,28 @@ const router = express.Router();
 const User = require('../models/User');
 
 // Sign-in (registration) route
-router.post('/register', async (req, res) => {
+router.post("/register", async (req, res) => {
+  console.log(req.body.data);
   try {
-    console.log("Received user data:", req.body);
-    const newUser = new User(req.body);
+    const { name, email, phoneNo, password, domain, profilePicture } = req.body;
+
+    // Create a new user object
+    const newUser = new User({
+      name,
+      email,
+      phoneNo,
+      password,
+      domain,
+      profilePicture, // Save the Firebase URL directly
+    });
+
+    // Save user to the database
     await newUser.save();
-    res.status(201).json(newUser); // Corrected "Status" to "status"
+
+    res.status(201).json(newUser);
   } catch (error) {
-    res.status(400).json({ message: error.message }); // Corrected "Status" to "status"
+    console.error("Error during registration:", error);
+    res.status(400).json({ message: error.message });
   }
 });
 

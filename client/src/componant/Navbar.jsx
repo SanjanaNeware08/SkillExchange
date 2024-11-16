@@ -1,26 +1,18 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { Link } from "react-router-dom";
 
-const Navbar = ({ user, setUser }) => {
-  const navigate = useNavigate();
-  const [isExploreOpen, setIsExploreOpen] = useState(false);
+const Navbar = () => {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const user = useSelector((state) => state.user.currentUser); // Accessing user data from Redux
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  // Toggle Explore dropdown
-  const toggleExploreDropdown = () => {
-    setIsExploreOpen(!isExploreOpen);
-  };
-
-  // Toggle Profile dropdown
-  const toggleProfileDropdown = () => {
-    setIsProfileDropdownOpen(!isProfileDropdownOpen);
-  };
-
-  // Logout Handler
   const handleLogout = () => {
-    localStorage.removeItem("user"); // Clear user data from local storage
-    setUser(null); // Clear user state
-    navigate("/"); // Redirect to the homepage
+    dispatch({ type: "USER_LOGOUT" }); // Dispatch action to clear user data
+    localStorage.removeItem("persist:root"); // Clear persisted data from localStorage
+    navigate("/"); // Redirect to homepage
   };
 
   return (
@@ -43,56 +35,6 @@ const Navbar = ({ user, setUser }) => {
               Home
             </Link>
 
-            {/* Explore Dropdown */}
-            <div className="relative">
-              <button
-                onClick={toggleExploreDropdown}
-                className="text-gray-600 hover:text-blue-500 px-3 py-2 rounded-md text-lg font-medium focus:outline-none"
-              >
-                Explore
-              </button>
-              {isExploreOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
-                  <Link
-                    to="/explore/cooking"
-                    className="block px-4 py-2 text-gray-600 hover:bg-gray-100"
-                  >
-                    Cooking
-                  </Link>
-                  <Link
-                    to="/explore/artistry"
-                    className="block px-4 py-2 text-gray-600 hover:bg-gray-100"
-                  >
-                    Artistry
-                  </Link>
-                  <Link
-                    to="/explore/banking"
-                    className="block px-4 py-2 text-gray-600 hover:bg-gray-100"
-                  >
-                    Banking
-                  </Link>
-                  <Link
-                    to="/explore/acting"
-                    className="block px-4 py-2 text-gray-600 hover:bg-gray-100"
-                  >
-                    Acting
-                  </Link>
-                  <Link
-                    to="/explore/engineering"
-                    className="block px-4 py-2 text-gray-600 hover:bg-gray-100"
-                  >
-                    Engineering
-                  </Link>
-                  <Link
-                    to="/explore/readers"
-                    className="block px-4 py-2 text-gray-600 hover:bg-gray-100"
-                  >
-                    Readers
-                  </Link>
-                </div>
-              )}
-            </div>
-
             <Link
               to="/help"
               className="text-gray-600 hover:text-blue-500 px-3 py-2 rounded-md text-lg font-medium"
@@ -100,16 +42,20 @@ const Navbar = ({ user, setUser }) => {
               Help
             </Link>
 
-            {/* Profile Picture or Sign In */}
+            {/* Profile Image or Login */}
             {user ? (
               <div className="relative">
                 {/* Profile Picture Button */}
                 <button
-                  onClick={toggleProfileDropdown}
+                  onClick={() =>
+                    setIsProfileDropdownOpen(!isProfileDropdownOpen)
+                  }
                   className="flex items-center focus:outline-none"
                 >
                   <img
-                    src={user.profilePicture || "https://via.placeholder.com/40"}
+                    src={
+                      user.profilePicture || "https://via.placeholder.com/40"
+                    }
                     alt="Profile"
                     className="w-10 h-10 rounded-full"
                   />
@@ -126,10 +72,7 @@ const Navbar = ({ user, setUser }) => {
                       View Profile
                     </Link>
                     <button
-                      onClick={() => {
-                        handleLogout();
-                        setIsProfileDropdownOpen(false);
-                      }}
+                      onClick={handleLogout}
                       className="block w-full text-left px-4 py-2 text-gray-600 hover:bg-gray-100"
                     >
                       Logout
@@ -139,62 +82,14 @@ const Navbar = ({ user, setUser }) => {
               </div>
             ) : (
               <Link
-                to="/signin"
+                to="/login"
                 className="text-gray-600 hover:text-blue-500 px-3 py-2 rounded-md text-lg font-medium"
               >
-                Sign In
+                Login
               </Link>
             )}
           </div>
-
-          {/* Mobile Menu Button */}
-          <div className="md:hidden flex items-center">
-            <button className="mobile-menu-button focus:outline-none">
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M4 6h16M4 12h16m-7 6h7"
-                />
-              </svg>
-            </button>
-          </div>
         </div>
-      </div>
-
-      {/* Mobile Menu */}
-      <div className="mobile-menu hidden md:hidden">
-        <Link
-          to="/"
-          className="block text-gray-600 hover:text-blue-500 px-4 py-2"
-        >
-          Home
-        </Link>
-        <Link
-          to="/explore"
-          className="block text-gray-600 hover:text-blue-500 px-4 py-2"
-        >
-          Explore
-        </Link>
-        <Link
-          to="/help"
-          className="block text-gray-600 hover:text-blue-500 px-4 py-2"
-        >
-          Help
-        </Link>
-        <Link
-          to="/signin"
-          className="block text-gray-600 hover:text-blue-500 px-4 py-2"
-        >
-          Sign in
-        </Link>
       </div>
     </nav>
   );
